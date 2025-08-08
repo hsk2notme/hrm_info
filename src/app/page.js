@@ -1,15 +1,9 @@
 "use client";
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Container, Typography, Box } from '@mui/material';
 
-function loadPickerScript(callback) {
-  const script = document.createElement('script');
-  script.src = 'https://apis.google.com/js/api.js';
-  script.onload = callback;
-  document.body.appendChild(script);
-}
-
 export default function Home() {
+  const [uploadedUrls, setUploadedUrls] = React.useState({});
   const [form, setForm] = React.useState({
     fullName: '',
     gender: '',
@@ -17,20 +11,20 @@ export default function Home() {
     phone: '',
     permanentAddress: '',
     currentAddress: '',
-    unitName: '',
+    unitName: '', // Trường này sẽ được ánh xạ tới Ten_Don_Vi
     email: '',
     facebook: '',
     citizenId: '',
     citizenFront: null,
     citizenBack: null,
     staffPhoto: null,
-    position: '',
-    workType: '',
+    position: '', // Ánh xạ tới Hinh_Thuc_Cong_Viec
+    workType: '', // Ánh xạ tới Hinh_Thuc_Lam_Viec
     startDate: '',
-    role: '',
-    department: '',
-    memberOf: '',
-    workPlace: '',
+    role: '', // Ánh xạ tới Chuc_Vu
+    department: '', // Ánh xạ tới Phong_Ban
+    memberOf: '', // Ánh xạ tới Thuong_Hieu
+    workPlace: '', // Ánh xạ tới Noi_Lam_Viec
     vehiclePlate: '',
     joinInternalGroup: '',
     vpBankAccount: '',
@@ -49,57 +43,32 @@ export default function Home() {
 
 const handleSubmit = async (e) => {
   e.preventDefault();
-  if (!form.confirm) {
+  // Thay alert bằng thông báo UI khác nếu cần
+  if (!form.confirm) { // Đơn giản hóa điều kiện kiểm tra confirm
     alert('Bạn phải xác nhận cam đoan thông tin!');
     return;
   }
-  await fetch('http://localhost:5000/hrminfo', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(form),
+  const formData = new FormData();
+  Object.keys(form).forEach(key => {
+    formData.append(key, form[key]);
   });
-  alert('Đã gửi thông tin!');
-};
-
-  useEffect(() => {
-    loadPickerScript(() => {
-      window.gapi.load('auth', { callback: () => {} });
-      window.gapi.load('picker', { callback: () => {} });
+  const res = await fetch('http://localhost:5000/hrminfo', {
+    method: 'POST',
+    body: formData,
+  });
+  const result = await res.json();
+  if (result.success) {
+    setUploadedUrls({
+      staffPhoto: result.staffPhotoPath,
+      citizenFront: result.citizenFrontPath,
+      citizenBack: result.citizenBackPath,
     });
-  }, []);
-
-const handleGoogleDriveUpload = (field) => {
-  const clientId = '850546860539-dafjeeu61vc3c2orbarbkvoug8s1vt3p.apps.googleusercontent.com';
-  const scope = ['https://www.googleapis.com/auth/drive.file'];
-  window.gapi.auth.authorize(
-    {
-      client_id: clientId,
-      scope: scope.join(' '),
-      immediate: false,
-    },
-    function (authResult) {
-      if (authResult && !authResult.error) {
-        const picker = new window.google.picker.PickerBuilder()
-          .addView(window.google.picker.ViewId.DOCS)
-          .addView(window.google.picker.ViewId.UPLOAD)
-          .setOAuthToken(authResult.access_token)
-          .setDeveloperKey('YOUR_DEVELOPER_KEY')
-          .setCallback(function (data) {
-            if (data.action === window.google.picker.Action.PICK) {
-              const file = data.docs[0];
-              setForm((prev) => ({
-                ...prev,
-                [field + 'DriveId']: file.id,
-                [field + 'DriveName']: file.name,
-              }));
-            }
-          })
-          .build();
-        picker.setVisible(true);
-      }
-    }
-  );
+    alert('Đã gửi thông tin thành công!');
+  } else {
+    alert('Gửi thông tin thất bại: ' + (result.error || 'Lỗi không xác định.')); // Cải thiện thông báo lỗi
+  }
 };
+
 
   return (
     <Container maxWidth="md" sx={{ bgcolor: '#f3e8ff', minHeight: '100vh', py: 4 }}>
@@ -108,7 +77,7 @@ const handleGoogleDriveUpload = (field) => {
         <Box mb={3} p={2} sx={{border:'1px solid #a78bfa', borderRadius:2, background:'#f8f5ff'}}>
           <Typography variant="h6" color="primary" fontWeight={700} mb={2}>Thông tin cá nhân</Typography>
           <Box mb={2}><input name="fullName" placeholder="Họ và tên" value={form.fullName} onChange={handleChange} required style={{width:'100%', padding:8, borderRadius:8, border:'1px solid #ccc'}} /></Box>
-          <Box mb={2}><input name="dob" type="text" placeholder="Ngày sinh (d/m/yyyy)" value={form.dob} onChange={handleChange} required style={{width:'100%', padding:8, borderRadius:8, border:'1px solid #ccc'}} /></Box>
+          <Box mb={2}><input name="dob" type="text" placeholder="Ngày sinh (DD/MM/YYYY)" value={form.dob} onChange={handleChange} required style={{width:'100%', padding:8, borderRadius:8, border:'1px solid #ccc'}} /></Box>
           <Box mb={2}>
             <select name="gender" value={form.gender} onChange={handleChange} required style={{width:'100%', padding:8, borderRadius:8, border:'1px solid #ccc'}}>
               <option value="">Giới tính</option>
@@ -120,22 +89,23 @@ const handleGoogleDriveUpload = (field) => {
           <Box mb={2}><input name="phone" placeholder="Số điện thoại" value={form.phone} onChange={handleChange} required style={{width:'100%', padding:8, borderRadius:8, border:'1px solid #ccc'}} /></Box>
           <Box mb={2}><input name="permanentAddress" placeholder="Địa chỉ thường trú" value={form.permanentAddress} onChange={handleChange} required style={{width:'100%', padding:8, borderRadius:8, border:'1px solid #ccc'}} /></Box>
           <Box mb={2}><input name="currentAddress" placeholder="Địa chỉ hiện tại" value={form.currentAddress} onChange={handleChange} required style={{width:'100%', padding:8, borderRadius:8, border:'1px solid #ccc'}} /></Box>
-          <Box mb={2}><input name="unitName" placeholder="Đơn vị (Tên Đại học đang theo học)" value={form.unitName} onChange={handleChange} required style={{width:'100%', padding:8, borderRadius:8, border:'1px solid #ccc'}} /></Box>
+          <Box mb={2}><input name="unitName" placeholder="Tên Đơn vị (VD: 10 Education - Tin học, The TOEIC Lab)" value={form.unitName} onChange={handleChange} required style={{width:'100%', padding:8, borderRadius:8, border:'1px solid #ccc'}} /></Box>
           <Box mb={2}><input name="email" placeholder="Email" value={form.email} onChange={handleChange} required style={{width:'100%', padding:8, borderRadius:8, border:'1px solid #ccc'}} /></Box>
           <Box mb={2}><input name="facebook" placeholder="Link Facebook" value={form.facebook} onChange={handleChange} style={{width:'100%', padding:8, borderRadius:8, border:'1px solid #ccc'}} /></Box>
           <Box mb={2}><input name="citizenId" placeholder="Số Căn cước công dân" value={form.citizenId} onChange={handleChange} required style={{width:'100%', padding:8, borderRadius:8, border:'1px solid #ccc'}} /></Box>
           <Box mb={2}>
-            <label style={{display:'block', fontWeight:500, marginBottom:4}}>Ảnh CCCD mặt trước</label>
-            <button type="button" onClick={() => handleGoogleDriveUpload('citizenFront')} style={{width:'100%', padding:12, borderRadius:8, border:'1px solid #a78bfa', background:'#f8f5ff', color:'#6d28d9', fontWeight:600}}>
-              {form.citizenFrontDriveName ? 'Đã chọn: ' + form.citizenFrontDriveName : 'Thêm tệp từ Google Drive'}
-            </button>
+            <label htmlFor="citizenFront" style={{ display: 'block', fontWeight: 500, marginBottom: 4 }}>Ảnh CCCD mặt trước</label>
+            <input id="citizenFront" name="citizenFront" type="file" accept="image/*" onClick={e => { e.target.value = null; }} onChange={handleChange} required style={{ width: '100%', padding: 8 }} />
+            {form.citizenFront && <Typography variant="caption">{form.citizenFront.name}</Typography>}
+            {uploadedUrls.citizenFront && <img src={uploadedUrls.citizenFront} alt="Ảnh CCCD mặt trước" style={{maxWidth: '100%', marginTop: 8, borderRadius: 8}} />}
           </Box>
           <Box mb={2}>
-            <label style={{display:'block', fontWeight:500, marginBottom:4}}>Ảnh CCCD mặt sau</label>
-            <button type="button" onClick={() => handleGoogleDriveUpload('citizenFront')} style={{width:'100%', padding:12, borderRadius:8, border:'1px solid #a78bfa', background:'#f8f5ff', color:'#6d28d9', fontWeight:600}}>
-              {form.citizenFrontDriveName ? 'Đã chọn: ' + form.citizenFrontDriveName : 'Thêm tệp từ Google Drive'}
-            </button>
+            <label htmlFor="citizenBack" style={{ display: 'block', fontWeight: 500, marginBottom: 4 }}>Ảnh CCCD mặt sau</label>
+            <input id="citizenBack" name="citizenBack" type="file" accept="image/*" onChange={handleChange} required style={{ width: '100%', padding: 8 }} />
+            {form.citizenBack && <Typography variant="caption">{form.citizenBack.name}</Typography>}
+            {uploadedUrls.citizenBack && <img src={uploadedUrls.citizenBack} alt="Ảnh CCCD mặt sau" style={{maxWidth: '100%', marginTop: 8, borderRadius: 8}} />}
           </Box>
+          {/* Đã bỏ trường schoolName */}
         </Box>
         {/* Thông tin công việc */}
         <Box mb={3} p={2} sx={{border:'1px solid #a78bfa', borderRadius:2, background:'#f8f5ff'}}>
@@ -151,7 +121,7 @@ const handleGoogleDriveUpload = (field) => {
               <option>Giảng viên/trợ giảng chính thức</option>
             </select>
           </Box>
-          <Box mb={2}><input name="startDate" type="text" placeholder="Ngày bắt đầu làm việc (d/m/yyyy)" value={form.startDate} onChange={handleChange} required style={{width:'100%', padding:8, borderRadius:8, border:'1px solid #ccc'}} /></Box>
+          <Box mb={2}><input name="startDate" type="text" placeholder="Ngày bắt đầu làm việc (DD/MM/YYYY)" value={form.startDate} onChange={handleChange} required style={{width:'100%', padding:8, borderRadius:8, border:'1px solid #ccc'}} /></Box>
           <Box mb={2}>
             <select name="workType" value={form.workType} onChange={handleChange} required style={{width:'100%', padding:8, borderRadius:8, border:'1px solid #ccc'}}>
               <option value="">Hình thức làm việc</option>
@@ -232,10 +202,10 @@ const handleGoogleDriveUpload = (field) => {
             </select>
           </Box>
           <Box mb={2}>
-            <label style={{display:'block', fontWeight:500, marginBottom:4}}>Ảnh thẻ nhân viên</label>
-            <button type="button" onClick={() => handleGoogleDriveUpload('citizenFront')} style={{width:'100%', padding:12, borderRadius:8, border:'1px solid #a78bfa', background:'#f8f5ff', color:'#6d28d9', fontWeight:600}}>
-              {form.citizenFrontDriveName ? 'Đã chọn: ' + form.citizenFrontDriveName : 'Thêm tệp từ Google Drive'}
-            </button>
+            <label htmlFor="staffPhoto" style={{ display: 'block', fontWeight: 500, marginBottom: 4 }}>Ảnh thẻ nhân viên</label>
+            <input id="staffPhoto" name="staffPhoto" type="file" accept="image/*" onChange={handleChange} required style={{ width: '100%', padding: 8 }} />
+            {form.staffPhoto && <Typography variant="caption">{form.staffPhoto.name}</Typography>}
+            {uploadedUrls.staffPhoto && <img src={uploadedUrls.staffPhoto} alt="Ảnh thẻ nhân viên" style={{maxWidth: '100%', marginTop: 8, borderRadius: 8}} />}
           </Box>
         </Box>
         {/* Thông tin tài khoản ngân hàng */}
