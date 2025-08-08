@@ -1,7 +1,13 @@
-
 "use client";
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Container, Typography, Box } from '@mui/material';
+
+function loadPickerScript(callback) {
+  const script = document.createElement('script');
+  script.src = 'https://apis.google.com/js/api.js';
+  script.onload = callback;
+  document.body.appendChild(script);
+}
 
 export default function Home() {
   const [form, setForm] = React.useState({
@@ -41,22 +47,59 @@ export default function Home() {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!form.confirm) {
-      alert('Bạn phải xác nhận cam đoan thông tin!');
-      return;
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!form.confirm) {
+    alert('Bạn phải xác nhận cam đoan thông tin!');
+    return;
+  }
+  await fetch('http://localhost:5000/hrminfo', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(form),
+  });
+  alert('Đã gửi thông tin!');
+};
+
+  useEffect(() => {
+    loadPickerScript(() => {
+      window.gapi.load('auth', { callback: () => {} });
+      window.gapi.load('picker', { callback: () => {} });
+    });
+  }, []);
+
+const handleGoogleDriveUpload = (field) => {
+  const clientId = '850546860539-dafjeeu61vc3c2orbarbkvoug8s1vt3p.apps.googleusercontent.com';
+  const scope = ['https://www.googleapis.com/auth/drive.file'];
+  window.gapi.auth.authorize(
+    {
+      client_id: clientId,
+      scope: scope.join(' '),
+      immediate: false,
+    },
+    function (authResult) {
+      if (authResult && !authResult.error) {
+        const picker = new window.google.picker.PickerBuilder()
+          .addView(window.google.picker.ViewId.DOCS)
+          .addView(window.google.picker.ViewId.UPLOAD)
+          .setOAuthToken(authResult.access_token)
+          .setDeveloperKey('YOUR_DEVELOPER_KEY')
+          .setCallback(function (data) {
+            if (data.action === window.google.picker.Action.PICK) {
+              const file = data.docs[0];
+              setForm((prev) => ({
+                ...prev,
+                [field + 'DriveId']: file.id,
+                [field + 'DriveName']: file.name,
+              }));
+            }
+          })
+          .build();
+        picker.setVisible(true);
+      }
     }
-    const formData = new FormData();
-    Object.entries(form).forEach(([key, value]) => {
-      formData.append(key, value);
-    });
-    await fetch('/hrminfo', {
-      method: 'POST',
-      body: formData,
-    });
-    alert('Đã gửi thông tin!');
-  };
+  );
+};
 
   return (
     <Container maxWidth="md" sx={{ bgcolor: '#f3e8ff', minHeight: '100vh', py: 4 }}>
@@ -83,11 +126,15 @@ export default function Home() {
           <Box mb={2}><input name="citizenId" placeholder="Số Căn cước công dân" value={form.citizenId} onChange={handleChange} required style={{width:'100%', padding:8, borderRadius:8, border:'1px solid #ccc'}} /></Box>
           <Box mb={2}>
             <label style={{display:'block', fontWeight:500, marginBottom:4}}>Ảnh CCCD mặt trước</label>
-            <input name="citizenFront" type="file" accept="image/*" onChange={handleChange} style={{width:'100%'}} />
+            <button type="button" onClick={() => handleGoogleDriveUpload('citizenFront')} style={{width:'100%', padding:12, borderRadius:8, border:'1px solid #a78bfa', background:'#f8f5ff', color:'#6d28d9', fontWeight:600}}>
+              {form.citizenFrontDriveName ? 'Đã chọn: ' + form.citizenFrontDriveName : 'Thêm tệp từ Google Drive'}
+            </button>
           </Box>
           <Box mb={2}>
             <label style={{display:'block', fontWeight:500, marginBottom:4}}>Ảnh CCCD mặt sau</label>
-            <input name="citizenBack" type="file" accept="image/*" onChange={handleChange} style={{width:'100%'}} />
+            <button type="button" onClick={() => handleGoogleDriveUpload('citizenFront')} style={{width:'100%', padding:12, borderRadius:8, border:'1px solid #a78bfa', background:'#f8f5ff', color:'#6d28d9', fontWeight:600}}>
+              {form.citizenFrontDriveName ? 'Đã chọn: ' + form.citizenFrontDriveName : 'Thêm tệp từ Google Drive'}
+            </button>
           </Box>
         </Box>
         {/* Thông tin công việc */}
@@ -185,8 +232,10 @@ export default function Home() {
             </select>
           </Box>
           <Box mb={2}>
-            <label style={{display:'block', fontWeight:500, marginBottom:4}}>Ảnh làm thẻ nhân viên</label>
-            <input name="staffPhoto" type="file" accept="image/*" onChange={handleChange} style={{width:'100%'}} />
+            <label style={{display:'block', fontWeight:500, marginBottom:4}}>Ảnh thẻ nhân viên</label>
+            <button type="button" onClick={() => handleGoogleDriveUpload('citizenFront')} style={{width:'100%', padding:12, borderRadius:8, border:'1px solid #a78bfa', background:'#f8f5ff', color:'#6d28d9', fontWeight:600}}>
+              {form.citizenFrontDriveName ? 'Đã chọn: ' + form.citizenFrontDriveName : 'Thêm tệp từ Google Drive'}
+            </button>
           </Box>
         </Box>
         {/* Thông tin tài khoản ngân hàng */}
