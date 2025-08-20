@@ -1,0 +1,44 @@
+import React from 'react';
+
+// Component này nhận các props giống hệt một thẻ <input> thông thường
+export default function CustomDateInput({ value, onChange, name, placeholder, required }) {
+
+  const handleInputChange = (e) => {
+    // 1. Lấy giá trị thô và chỉ giữ lại các ký tự số
+    let rawValue = e.target.value.replace(/[^\d]/g, '');
+
+    // 2. Giới hạn độ dài tối đa là 8 ký tự (DDMMYYYY)
+    rawValue = rawValue.slice(0, 8);
+
+    // 3. Dựa vào độ dài để chèn các dấu '/'
+    let formattedValue = rawValue;
+    if (rawValue.length > 4) {
+      formattedValue = `${rawValue.slice(0, 2)}/${rawValue.slice(2, 4)}/${rawValue.slice(4)}`;
+    } else if (rawValue.length > 2) {
+      formattedValue = `${rawValue.slice(0, 2)}/${rawValue.slice(2)}`;
+    }
+
+    // 4. Gọi lại hàm onChange của cha với một "sự kiện giả"
+    // để cập nhật state trong form chính một cách liền mạch.
+    if (onChange) {
+      onChange({
+        target: {
+          name: name,
+          value: formattedValue,
+        },
+      });
+    }
+  };
+
+  return (
+    <input
+      type="text" // Dùng type="text" để có thể hiển thị dấu '/'
+      name={name}
+      value={value}
+      onChange={handleInputChange}
+      placeholder={placeholder}
+      required={required}
+      // Các thuộc tính khác có thể được thêm vào đây
+    />
+  );
+}

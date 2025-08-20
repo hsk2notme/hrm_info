@@ -1,15 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;900&display=swap');
 @import "tailwindcss";
+
+@keyframes flash {
+  0%, 100% { text-shadow: 0 2px 8px rgba(124,58,237,0.18), 0 0 0 #fff; }
+  50% { text-shadow: 0 2px 24px #fff, 0 0 30px #fff; }
+}
+
+html, body {
+  font-family: 'Roboto', 'Be Vietnam Pro', Arial, Helvetica, sans-serif;
+  font-size: 17px;
+  color: #222 !important;
+  background: url('/final1.png') center/cover no-repeat fixed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -19,8 +32,75 @@
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Unified style for all textboxes and dropdowns */
+input, select, textarea {
+  font-family: 'Roboto', 'Be Vietnam Pro', Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  color: #222 !important;
+  background: #fafaff;
+  border-radius: 16px;
+  border: 1.5px solid #a78bfa;
+  padding: 10px 16px;
+  margin-bottom: 0px;
+  transition: box-shadow 0.2s, border-color 0.2s;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.07);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px #a78bfa33, 0 4px 16px rgba(124, 58, 237, 0.15);
+  outline: none;
+  color: #111 !important;
+  background: #fff;
+  font-weight: 500;
+}
+
+/* Unified style for placeholder text */
+input::placeholder, textarea::placeholder {
+    color: #6b7280;
+    font-weight: 400;
+    opacity: 1;
+}
+
+select option {
+  color: #111 !important;
+  font-size: 17px;
+  background: #fff;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* Loại bỏ viền sáng mặc định trên một số element */
+input[type="file"]:focus,
+button:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 3px #a78bfa33 !important;
+  border-color: #a78bfa !important;
+}
+
+/* Hiệu ứng hover cho button upload ảnh */
+button:hover {
+  box-shadow: 0 0 0 3px #a78bfa55;
+  border-color: #a78bfa;
+}
+
+/* Ẩn triệt để icon Next.js/Vercel Toolbar ở góc trái dưới */
+vercel-vitals, .vercel-toolbar, .vercel-vitals, .vercel-vitals-bar, .vercel-vitals-icon, svg[xmlns="http://www.w3.org/2000/svg"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Ẩn triệt để icon Next.js ở góc trái dưới (dạng img/svg/fixed) */
+img[src*="next.svg"], svg[xmlns="http://www.w3.org/2000/svg"], .vercel-vitals, .vercel-toolbar {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+body > img[style*="fixed"], body > svg[style*="fixed"], body > div[style*="fixed"] {
+  display: none !important;
 }
